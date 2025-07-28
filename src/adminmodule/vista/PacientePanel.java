@@ -25,9 +25,9 @@ public class PacientePanel extends JFrame {
                    new SimpleDateFormat("dd/MM/yyyy").format(paciente.getFechaNacimiento()));
         addInfoField(infoPanel, "Sexo:", paciente.getSexo());
         addInfoField(infoPanel, "Correo:", paciente.getCorreo());
-        addInfoField(infoPanel, "Alergias:", paciente.getAlergias());
-        addInfoField(infoPanel, "Nivel Oxigenación:", paciente.getOxigenacion());
-        addInfoField(infoPanel, "ID Antecedentes:", paciente.getIdAntecedentes());
+        //addInfoField(infoPanel, "Alergias:", paciente.getAlergias());
+        //addInfoField(infoPanel, "Nivel Oxigenación:", paciente.getOxigenacion());
+        //addInfoField(infoPanel, "ID Antecedentes:", paciente.getIdAntecedentes());
         
         tabbedPane.addTab("Información Personal", infoPanel);
         
