@@ -41,6 +41,7 @@ public class PacientePanel extends JFrame {
         panel.add(new JLabel(label, SwingConstants.RIGHT));
         panel.add(new JTextField(value));
     }
+    //asd
 }
 
 
