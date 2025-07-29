@@ -24,7 +24,7 @@ public class Validaciones {
         String[] partes = nombreCompleto.trim().split("\\s+");
 
         // Debe tener exactamente 4 partes (2 nombres + 2 apellidos)
-        if (partes.length != 4) {
+        if (partes.length != 2) {
             return false;
         }
 

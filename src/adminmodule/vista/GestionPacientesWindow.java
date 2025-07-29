@@ -262,6 +262,7 @@
         }
 
         private void guardarCambiosPaciente() {
+            // 1. Obtener todos los datos del formulario
             String cedula = txtCedula.getText().trim();
             String nombres = txtNombres.getText().trim();
             String apellidos = txtApellidos.getText().trim();
@@ -273,60 +274,98 @@
             String oxigenacion = txtOxigenacion.getText().trim();
             String idAntecedentes = txtIdAntecedentes.getText().trim();
 
-            // Validaciones básicas (puedes usar Validaciones.java)
-            if (nombres.isEmpty() || apellidos.isEmpty() || fechaNacimiento == null || sexo.isEmpty() || correo.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Por favor, complete todos los campos obligatorios.", "Error de Validación", JOptionPane.WARNING_MESSAGE);
+            // 2. Validaciones básicas de campos obligatorios
+            if (nombres.isEmpty() || apellidos.isEmpty() || fechaNacimiento == null) {
+                JOptionPane.showMessageDialog(this, 
+                    "Los campos Nombres, Apellidos y Fecha de Nacimiento son obligatorios",
+                    "Error de Validación", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            if (!Validaciones.validarEmail(correo)) {
-                JOptionPane.showMessageDialog(this, "Formato de correo electrónico inválido.", "Error de Validación", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            // Si la contraseña se dejó en blanco, no la actualizamos. Si se ingresó, la validamos.
-            if (!contrasena.isEmpty() && !Validaciones.validarContrasena(contrasena)) {
-                 JOptionPane.showMessageDialog(this, "La contraseña debe tener al menos 6 caracteres.", "Error de Validación", JOptionPane.WARNING_MESSAGE);
-                 return;
-            }
-            // Si la contraseña está vacía, se asume que no se desea cambiar y se usa la existente.
-            // Esto requiere obtener el paciente primero para obtener la contraseña actual si no se ingresó una nueva.
-            // Para simplificar, si el campo de contraseña está vacío, no se envía para actualización.
-            // Si se envía, se actualiza. Esto depende de la lógica de tu DAO.
-            // En este ejemplo, si el campo está vacío, se envía vacío y el DAO lo actualizará a vacío.
-            // Si quieres mantener la contraseña si no se cambia, el DAO debe manejarlo.
-            // Por ahora, asumimos que si se escribe algo, se actualiza, si no, se envía vacío.
-            // Una mejor práctica sería:
-            // String contrasenaFinal = contrasena.isEmpty() ? adminController.obtenerPacientePorCedula(cedula).getContrasena() : contrasena;
-            // Pero para eso necesitarías un método obtenerPacientePorCedula en AdminController.
 
-            boolean exito;
-            if (contrasena.isEmpty()) {
-                // Si la contraseña está vacía, obtenemos la contraseña actual del paciente
-                Paciente pacienteOriginal = adminController.obtenerTodosPacientes().stream()
-                                                .filter(p -> p.getCedula().equals(cedula))
-                                                .findFirst().orElse(null);
-                if (pacienteOriginal != null) {
-                    contrasena = pacienteOriginal.getContrasena(); // Usar la contraseña existente
-                } else {
-                    JOptionPane.showMessageDialog(this, "Error: Paciente no encontrado para actualizar contraseña.", "Error", JOptionPane.ERROR_MESSAGE);
+            // 3. Validación de formato de correo
+            if (!correo.isEmpty() && !Validaciones.validarEmail(correo)) {
+                JOptionPane.showMessageDialog(this, 
+                    "Por favor ingrese un correo electrónico válido",
+                    "Error de Validación", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // 4. Validación de contraseña (si se modificó)
+            if (!contrasena.isEmpty() && !Validaciones.validarContrasena(contrasena)) {
+                JOptionPane.showMessageDialog(this, 
+                    "La contraseña debe tener al menos 6 caracteres",
+                    "Error de Validación", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // 5. Validación especial para ID de antecedentes
+            if (!idAntecedentes.isEmpty()) {
+                try {
+                    // Verificar que sea un número válido
+                    int id = Integer.parseInt(idAntecedentes);
+
+                    // Opcional: Verificar que exista en la base de datos
+                    if (!adminController.existeAntecedente(id)) {
+                        int respuesta = JOptionPane.showConfirmDialog(this,
+                            "El ID de antecedentes no existe. ¿Desea crearlo automáticamente?",
+                            "Antecedente no encontrado", JOptionPane.YES_NO_OPTION);
+
+                        if (respuesta == JOptionPane.YES_OPTION) {
+                            if (!adminController.crearAntecedente(id)) {
+                                JOptionPane.showMessageDialog(this,
+                                    "No se pudo crear el antecedente automáticamente",
+                                    "Error", JOptionPane.ERROR_MESSAGE);
+                                return;
+                            }
+                        } else {
+                            return; // El usuario decidió no crear el antecedente
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                    JOptionPane.showMessageDialog(this,
+                        "El ID de antecedentes debe ser un número válido",
+                        "Error de Validación", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
             }
 
-            exito = adminController.actualizarPaciente(cedula, nombres, apellidos, fechaNacimiento, sexo, correo, contrasena, alergias, oxigenacion, idAntecedentes);
+            // 6. Confirmación antes de guardar
+            int confirmacion = JOptionPane.showConfirmDialog(this,
+                "¿Está seguro que desea guardar los cambios para el paciente con cédula " + cedula + "?",
+                "Confirmar Actualización", JOptionPane.YES_NO_OPTION);
 
-            if (exito) {
-                JOptionPane.showMessageDialog(this, "Paciente actualizado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                cargarPacientesEnTabla();
-                limpiarFormulario();
-                habilitarCamposFormulario(false);
-                btnEditar.setEnabled(false);
-                btnEliminar.setEnabled(false);
-                btnGuardarCambios.setEnabled(false);
-                btnCancelar.setEnabled(false);
-            } else {
-                JOptionPane.showMessageDialog(this, "Error al actualizar paciente.", "Error", JOptionPane.ERROR_MESSAGE);
+            if (confirmacion != JOptionPane.YES_OPTION) {
+                return;
+            }
+
+            // 7. Intentar guardar los cambios
+            try {
+                boolean exito = adminController.actualizarPaciente(
+                    cedula, nombres, apellidos, fechaNacimiento,
+                    sexo, correo, contrasena.isEmpty() ? null : contrasena,
+                    alergias, oxigenacion, idAntecedentes.isEmpty() ? null : idAntecedentes
+                );
+
+                if (exito) {
+                    JOptionPane.showMessageDialog(this,
+                        "Los datos del paciente se actualizaron correctamente",
+                        "Actualización Exitosa", JOptionPane.INFORMATION_MESSAGE);
+                    cargarPacientesEnTabla();
+                    limpiarFormulario();
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                        "No se pudo actualizar el paciente. Verifique los datos e intente nuevamente.",
+                        "Error al Actualizar", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this,
+                    "Error al actualizar paciente: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
             }
         }
+        
+        
 
         private void eliminarPaciente() {
             String cedula = txtCedula.getText().trim();
@@ -340,7 +379,7 @@
                     "Confirmar Eliminación", JOptionPane.YES_NO_OPTION);
 
             if (confirmacion == JOptionPane.YES_OPTION) {
-                boolean exito = adminController.eliminarDoctorConConfirmacion(cedula); // Reutiliza el método de AdminController
+                boolean exito = adminController.eliminarPaciente(cedula) ; // Reutiliza el método de AdminController
                 if (exito) {
                     JOptionPane.showMessageDialog(this, "Paciente eliminado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
                     cargarPacientesEnTabla();
