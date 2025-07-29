@@ -9,9 +9,11 @@ import java.util.Scanner;
 
 public class AdminController {
     private final DoctorDAO doctorDAO;
+    private PacienteDAO pacienteDAO;
 
     public AdminController() {
         this.doctorDAO = new DoctorDAO();
+        this.pacienteDAO = new PacienteDAO();
     }
 
     public boolean registrarDoctor(String cedula, String nombres, String apellidos,
@@ -68,6 +70,31 @@ public class AdminController {
             System.out.println("Hubo un error al intentar eliminar al doctor.");
             return false;
         }
+    }
+    
+        public boolean actualizarPaciente(String cedula, String nombres, String apellidos,
+                                        Date fechaNacimiento, String sexo, String correo,
+                                        String contrasena, String alergias, String oxigenacion, String idAntecedentes) {
+            Paciente pacienteExistente = pacienteDAO.obtenerPorCedula(cedula);
+            if (pacienteExistente == null) {
+                System.out.println("Error: No existe un paciente con esa cédula.");
+                return false;
+            }
+
+            pacienteExistente.setNombres(nombres);
+            pacienteExistente.setApellidos(apellidos);
+            pacienteExistente.setFechaNacimiento(fechaNacimiento);
+            pacienteExistente.setSexo(sexo);
+            pacienteExistente.setCorreo(correo);
+            pacienteExistente.setContrasena(contrasena);
+            pacienteExistente.setAlergias(alergias);
+            pacienteExistente.setOxigenacion(oxigenacion);
+            pacienteExistente.setIdAntecedentes(idAntecedentes);
+
+            return pacienteDAO.actualizar(pacienteExistente);
+        }
+    public boolean eliminarPacienteConConfirmacion(String cedula) {
+        return pacienteDAO.eliminar(cedula);
     }
 
     public List<Doctor> obtenerTodosDoctores() {

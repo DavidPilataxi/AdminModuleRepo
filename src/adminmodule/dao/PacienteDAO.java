@@ -80,29 +80,47 @@ public class PacienteDAO implements UserDAO<Paciente> {
 
     @Override
     public boolean actualizar(Paciente paciente) {
-        String sql = "UPDATE paciente SET nombres = ?, apellidos = ?, fecha_nacimiento = ?, " +
-                    "sexo = ?, correo = ?, contrasena_paciente = ?, alergias = ?, " +
-                    "oxigenacion = ?, id_antecedetes = ? WHERE cedula = ?";
+        StringBuilder sqlBuilder = new StringBuilder("UPDATE paciente SET nombres = ?, apellidos = ?, fecha_nacimiento = ?, " +
+             "sexo = ?, correo = ?, alergias = ?, oxigenacion = ?, id_antecedetes = ?");
+        if (paciente.getContrasena() != null && !paciente.getContrasena().isEmpty()) {
+            sqlBuilder.append(", contrasena_paciente = ?");
+            }
+            sqlBuilder.append(" WHERE cedula = ?");
+            String sql = sqlBuilder.toString();
 
         try (Connection conn = ConexionSQL.conectar();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, paciente.getNombres());
-            ps.setString(2, paciente.getApellidos());
-            ps.setDate(3, new java.sql.Date(paciente.getFechaNacimiento().getTime()));
-            ps.setString(4, paciente.getSexo());
-            ps.setString(5, paciente.getCorreo());
-            ps.setString(6, paciente.getContrasena());
-            ps.setString(7, paciente.getAlergias());
-            ps.setString(8, paciente.getOxigenacion());
-            ps.setString(9, paciente.getIdAntecedentes());
-            ps.setString(10, paciente.getCedula());
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+                int i = 1;
+                ps.setString(i++, paciente.getNombres());
+                ps.setString(i++, paciente.getApellidos());
+                ps.setDate(i++, new java.sql.Date(paciente.getFechaNacimiento().getTime()));
+                ps.setString(i++, paciente.getSexo());
+                ps.setString(i++, paciente.getCorreo());
+                ps.setString(i++, paciente.getAlergias());
+                ps.setString(i++, paciente.getOxigenacion());
+                ps.setString(i++, paciente.getIdAntecedentes());
+                if (paciente.getContrasena() != null && !paciente.getContrasena().isEmpty()) {
+                    ps.setString(i++, paciente.getContrasena());
+                }
+                ps.setString(i++, paciente.getCedula());
 
+                return ps.executeUpdate() > 0;
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+    public boolean eliminar(String cedula) {
+        String sql = "DELETE FROM paciente WHERE cedula = ?";
+        try (Connection conn = ConexionSQL.conectar();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, cedula);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
-    }
+    } 
 
     public List<Paciente> obtenerTodos() {
         List<Paciente> pacientes = new ArrayList<>();
@@ -131,4 +149,6 @@ public class PacienteDAO implements UserDAO<Paciente> {
         }
         return pacientes;
     }
+    
+    
 }

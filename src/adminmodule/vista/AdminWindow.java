@@ -29,6 +29,12 @@ public class AdminWindow extends JFrame {
         JButton btnVerMedicos = new JButton("Ver Lista de Médicos");
         JButton btnVerPacientes = new JButton("Ver Lista de Pacientes");
         JButton btnCerrarSesion = new JButton("Cerrar Sesión");
+        JButton btnGestionarPacientes = new JButton("Gestionar Pacientes");
+        panelBotones.add(btnGestionarPacientes);
+        btnGestionarPacientes.addActionListener(e -> {
+            new GestionPacientesWindow().setVisible(true);
+            // No dispose() aquí si quieres que AdminWindow permanezca abierto
+        });
 
         panelBotones.add(btnRegistrarMedico);
         panelBotones.add(btnVerMedicos);
